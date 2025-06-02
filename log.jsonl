@@ -1,0 +1,2 @@
+{"op":"append","list_id":"lista1","value":42}
+{"op":"remove","list_id":"lista1","value":42}
