@@ -4,27 +4,61 @@ import (
 	"fmt"
 	"log"
 	"net/rpc"
+	"sync"
 	"github.com/brianrafs/rpc-list/server"
 )
 
 func main() {
-	client, err := rpc.Dial("tcp", "localhost:1234")
-	if err != nil {
-		log.Fatal("Erro ao conectar ao servidor:", err)
+	var wg sync.WaitGroup
+
+	// Número de clientes simulados
+	numClients := 5
+
+	for i := 0; i < numClients; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+
+			client, err := rpc.Dial("tcp", "localhost:1234")
+			if err != nil {
+				log.Printf("[Client %d] Erro ao conectar: %v", id, err)
+				return
+			}
+			defer client.Close()
+
+			// Append
+			var reply string
+			valueToAdd := id * 10
+			err = client.Call("RemoteListService.Append", server.AppendArgs{ListID: "lista1", Value: valueToAdd}, &reply)
+			if err != nil {
+				log.Printf("[Client %d] Append error: %v", id, err)
+				return
+			}
+			fmt.Printf("[Client %d] Append: %s\n", id, reply)
+
+			// Get Size
+			var size int
+			err = client.Call("RemoteListService.Size", server.SizeArgs{ListID: "lista1"}, &size)
+			if err == nil {
+				fmt.Printf("[Client %d] Size: %d\n", id, size)
+			}
+
+			// Get Index 0
+			var value int
+			err = client.Call("RemoteListService.Get", server.GetArgs{ListID: "lista1", Index: 0}, &value)
+			if err == nil {
+				fmt.Printf("[Client %d] Get index 0: %d\n", id, value)
+			}
+
+			// Remove último elemento
+			err = client.Call("RemoteListService.Remove", server.RemoveArgs{ListID: "lista1"}, &value)
+			if err == nil {
+				fmt.Printf("[Client %d] Remove: %d\n", id, value)
+			}
+		}(i)
 	}
 
-	var reply string
-	err = client.Call("RemoteListService.Append", server.AppendArgs{ListID: "lista1", Value: 42}, &reply)
-	fmt.Println("Append:", reply)
-
-	var size int
-	client.Call("RemoteListService.Size", server.SizeArgs{ListID: "lista1"}, &size)
-	fmt.Println("Size:", size)
-
-	var value int
-	client.Call("RemoteListService.Get", server.GetArgs{ListID: "lista1", Index: 0}, &value)
-	fmt.Println("Get index 0:", value)
-
-	client.Call("RemoteListService.Remove", server.RemoveArgs{ListID: "lista1"}, &value)
-	fmt.Println("Remove:", value)
+	// Espera todos os clientes finalizarem
+	wg.Wait()
+	fmt.Println("Todos os clientes terminaram.")
 }

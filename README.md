@@ -46,10 +46,27 @@ go run client/client.go
 Você verá saídas como:
 
 ```
-Append: Valor adicionado.
-Size: 1
-Get index 0: 42
-Remove: 42
+[Client 3] Append: Valor adicionado.
+[Client 3] Size: 2
+[Client 0] Append: Valor adicionado.
+[Client 4] Append: Valor adicionado.
+[Client 3] Get index 0: 30
+[Client 1] Append: Valor adicionado.
+[Client 4] Size: 5
+[Client 0] Size: 5
+[Client 2] Append: Valor adicionado.
+[Client 2] Size: 4
+[Client 0] Get index 0: 30
+[Client 1] Size: 4
+[Client 4] Get index 0: 30
+[Client 3] Remove: 20
+[Client 1] Get index 0: 30
+[Client 2] Get index 0: 30
+[Client 0] Remove: 10
+[Client 4] Remove: 40
+[Client 1] Remove: 0
+[Client 2] Remove: 30
+Todos os clientes terminaram.
 ```
 
 ---
