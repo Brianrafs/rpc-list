@@ -17,3 +17,7 @@ type RemoveArgs struct {
 type SizeArgs struct {
 	ListID string
 }
+
+type CreateArgs struct {
+	ListID string
+}

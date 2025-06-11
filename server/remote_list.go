@@ -32,10 +32,30 @@ func (s *RemoteListService) getListMutex(id string) *sync.RWMutex {
 	return s.mutex[id]
 }
 
+func (s *RemoteListService) CreateList(args CreateArgs, reply *string) error {
+	s.globalMu.Lock()
+	defer s.globalMu.Unlock()
+
+	if _, exists := s.lists[args.ListID]; exists {
+		return errors.New("lista já existe")
+	}
+
+	s.lists[args.ListID] = []int{}
+	s.mutex[args.ListID] = &sync.RWMutex{}
+	*reply = "Lista criada com sucesso"
+	return nil
+}
+
 func (s *RemoteListService) Append(args AppendArgs, reply *string) error {
 	mu := s.getListMutex(args.ListID)
 	mu.Lock()
 	defer mu.Unlock()
+
+	_, ok := s.lists[args.ListID]
+
+	if !ok {
+		return errors.New("não é possível adicionar valor na lista, lista inexistente")
+	}
 
 	s.lists[args.ListID] = append(s.lists[args.ListID], args.Value)
 	s.persist.AppendLog("append", args.ListID, args.Value)
