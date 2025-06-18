@@ -12,6 +12,7 @@ type RemoteListService struct {
 	persist *PersistenceManager
 }
 
+
 func NewRemoteListService() *RemoteListService {
 	s := &RemoteListService{
 		lists: make(map[string][]int),
@@ -19,31 +20,38 @@ func NewRemoteListService() *RemoteListService {
 	}
 	s.persist = NewPersistenceManager(s)
 	s.persist.LoadFromSnapshotAndLog()
-	go s.persist.StartSnapshotRoutine()
+	stopCh := make(chan struct{})
+	go s.persist.StartSnapshotRoutine(stopCh)
 	return s
 }
 
-func (s *RemoteListService) getListMutex(id string) *sync.RWMutex {
+func (s *RemoteListService) getListMutex(listID string) *sync.RWMutex {
 	s.globalMu.Lock()
 	defer s.globalMu.Unlock()
-	if _, ok := s.mutex[id]; !ok {
-		s.mutex[id] = &sync.RWMutex{}
+
+	if s.mutex == nil {
+		s.mutex = make(map[string]*sync.RWMutex)
 	}
-	return s.mutex[id]
+	if _, exists := s.mutex[listID]; !exists {
+		s.mutex[listID] = &sync.RWMutex{}
+	}
+	return s.mutex[listID]
 }
 
+
 func (s *RemoteListService) CreateList(args CreateArgs, reply *string) error {
-	s.globalMu.Lock()
-	defer s.globalMu.Unlock()
+    s.globalMu.Lock()
+    defer s.globalMu.Unlock()
 
-	if _, exists := s.lists[args.ListID]; exists {
-		return errors.New("lista já existe")
-	}
+    if _, exists := s.lists[args.ListID]; exists {
+        return errors.New("lista já existe")
+    }
 
-	s.lists[args.ListID] = []int{}
-	s.mutex[args.ListID] = &sync.RWMutex{}
-	*reply = "Lista criada com sucesso"
-	return nil
+    s.lists[args.ListID] = []int{}
+    s.mutex[args.ListID] = &sync.RWMutex{}
+    s.persist.AppendLog("create", args.ListID, 0)
+    *reply = "Lista criada com sucesso"
+    return nil
 }
 
 func (s *RemoteListService) Append(args AppendArgs, reply *string) error {

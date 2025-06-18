@@ -11,6 +11,8 @@ import (
 
 func main() {
 	rpc.Register(server.NewRemoteListService())
+	
+	
 	listener, err := net.Listen("tcp", ":1234")
 	if err != nil {
 		log.Fatalf("Erro ao escutar: %v", err)

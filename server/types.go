@@ -21,3 +21,15 @@ type SizeArgs struct {
 type CreateArgs struct {
 	ListID string
 }
+
+type SnapshotFile struct {
+    Timestamp int64                      `json:"timestamp"`
+    Lists     map[string][]int           `json:"lists"`
+}
+
+type LogEntry struct {
+    Op        string `json:"op"`
+    ListID    string `json:"list_id"`
+    Value     int    `json:"value"`
+    Timestamp int64  `json:"timestamp"`
+}
